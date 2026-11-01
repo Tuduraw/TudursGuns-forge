@@ -1,0 +1,36 @@
+--- a/com/example/tudursguns/block/SoldierPostBlockEntity.java
++++ b/com/example/tudursguns/block/SoldierPostBlockEntity.java
+@@ -18,7 +18,6 @@
+ import net.minecraft.core.NonNullList;
+ import net.minecraft.core.UUIDUtil;
+ import net.minecraft.core.Vec3i;
+-import net.minecraft.core.component.DataComponents;
+ import net.minecraft.network.chat.Component;
+ import net.minecraft.server.level.ServerLevel;
+ import net.minecraft.util.Mth;
+@@ -226,8 +225,9 @@
+ 			for (int i = ARMOR_SLOT_START; i < FOOD_SLOT_START; i++) {
+ 				ItemStack armor = this.items.get(i);
+ 				if (armor.isDamageableItem()) {
+-					armor.hurtAndBreak(Math.max(1, Math.round(armor.getMaxDamage() * DEATH_WEAR)), serverWorld, null, item -> {
+-					});
++					if (armor.hurt(Math.max(1, Math.round(armor.getMaxDamage() * DEATH_WEAR)), serverWorld.getRandom(), null)) {
++						armor.shrink(1);
++					}
+ 				}
+ 			}
+ 		}
+@@ -298,9 +298,10 @@
+ 	private void eat() {
+ 		for (int i = FOOD_SLOT_START; i < FOOD_SLOT_START + FOOD_SLOTS; i++) {
+ 			ItemStack stack = this.items.get(i);
+-			FoodProperties food = stack.get(DataComponents.FOOD);
+-			while (food != null && !stack.isEmpty() && this.food + food.nutrition() <= MAX_FOOD) {
+-				this.food = Math.min(MAX_FOOD, this.food + food.nutrition() + food.saturation());
++			FoodProperties food = stack.getItem().getFoodProperties(stack, null);
++			// 1.20.1 keeps a saturation modifier; the saturation it gives is nutrition * modifier * 2
++			while (food != null && !stack.isEmpty() && this.food + food.getNutrition() <= MAX_FOOD) {
++				this.food = Math.min(MAX_FOOD, this.food + food.getNutrition() + food.getNutrition() * food.getSaturationModifier() * 2f);
+ 				stack.shrink(1);
+ 			}
+ 		}

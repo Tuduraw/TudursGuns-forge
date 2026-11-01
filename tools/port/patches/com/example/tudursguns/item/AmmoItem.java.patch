@@ -1,0 +1,30 @@
+--- a/com/example/tudursguns/item/AmmoItem.java
++++ b/com/example/tudursguns/item/AmmoItem.java
+@@ -5,7 +5,6 @@
+ import com.example.tudursguns.registry.ModComponents;
+ import java.util.function.Consumer;
+ import net.minecraft.ChatFormatting;
+-import net.minecraft.core.component.DataComponents;
+ import net.minecraft.network.chat.Component;
+ import net.minecraft.server.level.ServerLevel;
+ import net.minecraft.world.entity.Entity;
+@@ -20,15 +19,11 @@
+ 		super(settings, ModDefinitions.AMMO, ModComponents.AMMO_TYPE);
+ 	}
+ 
++	/** Forge: the stack size comes from the definition. */
+ 	@Override
+-	public void inventoryTick(ItemStack stack, net.minecraft.world.level.Level tvmLevel, Entity entity, int tvmSlot, boolean tvmSelected) {
+-		if (!(tvmLevel instanceof ServerLevel world)) {
+-			return;
+-		}
+-		AmmoDefinition def = ModDefinitions.AMMO.getServer(com.example.tudursguns.registry.ModComponents.AMMO_TYPE.get(stack));
+-		if (def != null) {
+-			setIfChanged(stack, DataComponents.MAX_STACK_SIZE, def.maxStack());
+-		}
++	public int getMaxStackSize(ItemStack stack) {
++		AmmoDefinition def = ModDefinitions.AMMO.getAny(com.example.tudursguns.registry.ModComponents.AMMO_TYPE.get(stack));
++		return def != null ? def.maxStack() : 16;
+ 	}
+ 
+ 	@Override

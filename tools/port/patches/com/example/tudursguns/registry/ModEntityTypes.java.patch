@@ -1,0 +1,49 @@
+--- a/com/example/tudursguns/registry/ModEntityTypes.java
++++ b/com/example/tudursguns/registry/ModEntityTypes.java
+@@ -8,8 +8,6 @@
+ import com.example.tudursguns.entity.SmokeDecoyEntity;
+ import com.example.tudursguns.soldier.EnemySoldierEntity;
+ import com.example.tudursguns.soldier.FriendlySoldierEntity;
+-import com.example.tudursvehiclemod.compat.fabric.fabric.api.biome.v1.BiomeModifications;
+-import com.example.tudursvehiclemod.compat.fabric.fabric.api.biome.v1.BiomeSelectors;
+ import com.example.tudursvehiclemod.compat.fabric.fabric.api.object.builder.v1.entity.FabricDefaultAttributeRegistry;
+ import net.minecraft.core.Registry;
+ import net.minecraft.core.registries.BuiltInRegistries;
+@@ -19,7 +17,6 @@
+ import net.minecraft.world.entity.Entity;
+ import net.minecraft.world.entity.EntityType;
+ import net.minecraft.world.entity.MobCategory;
+-import net.minecraft.world.entity.SpawnPlacementTypes;
+ import net.minecraft.world.entity.SpawnPlacements;
+ import net.minecraft.world.item.Item;
+ import net.minecraft.world.item.SpawnEggItem;
+@@ -54,23 +51,19 @@
+ 
+ 		// Only a soldier post sends these out (a summoned one has no post and would vanish at once).
+ 		SOLDIER = register("soldier", EntityType.Builder.<FriendlySoldierEntity>of(FriendlySoldierEntity::new, MobCategory.MISC)
+-				.sized(0.6f, 1.8f).eyeHeight(1.62f).clientTrackingRange(10).noSummon());
++				.sized(0.6f, 1.8f).clientTrackingRange(10).noSummon());
+ 		FabricDefaultAttributeRegistry.register(SOLDIER, FriendlySoldierEntity::createAttributes);
+ 		ENEMY_SOLDIER = register("enemy_soldier", EntityType.Builder.<EnemySoldierEntity>of(EnemySoldierEntity::new, MobCategory.MONSTER)
+-				.sized(0.6f, 1.8f).eyeHeight(1.62f).clientTrackingRange(10));
++				.sized(0.6f, 1.8f).clientTrackingRange(10));
+ 		FabricDefaultAttributeRegistry.register(ENEMY_SOLDIER, EnemySoldierEntity::createAttributes);
+-		SpawnPlacements.register(ENEMY_SOLDIER, SpawnPlacementTypes.ON_GROUND, Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, EnemySoldierEntity::canSpawn);
+-		TudursGunsConfig.Data config = TudursGunsConfig.get();
+-		if (config.enemy_soldier_natural_spawn && config.enemy_soldier_spawn_weight > 0) {
+-			BiomeModifications.addSpawn(BiomeSelectors.foundInOverworld(), MobCategory.MONSTER, ENEMY_SOLDIER,
+-					config.enemy_soldier_spawn_weight, config.enemy_soldier_group_min, config.enemy_soldier_group_max);
+-		}
++		com.example.tudursguns.compat.Spawns.onGround(ENEMY_SOLDIER, Heightmap.Types.MOTION_BLOCKING_NO_LEAVES, EnemySoldierEntity::canSpawn);
++		// Natural spawning: forge.EnemySoldierSpawns (a biome modifier that reads the server config).
+ 		ResourceKey<Item> eggKey = ResourceKey.create(Registries.ITEM, new net.minecraft.resources.ResourceLocation(TudursGuns.MOD_ID, "enemy_soldier_spawn_egg"));
+-		ENEMY_SOLDIER_SPAWN_EGG = com.example.tudursvehiclemod.compat.Registration.register(BuiltInRegistries.ITEM, eggKey, new SpawnEggItem(new Item.Properties().spawnEgg(ENEMY_SOLDIER)));
++		ENEMY_SOLDIER_SPAWN_EGG = com.example.tudursvehiclemod.compat.Registration.register(BuiltInRegistries.ITEM, eggKey, new net.minecraftforge.common.ForgeSpawnEggItem(() -> ENEMY_SOLDIER, 0x585C64, 0x962020, new Item.Properties()));
+ 	}
+ 
+ 	private static <T extends Entity> EntityType<T> register(String path, EntityType.Builder<T> builder) {
+ 		ResourceKey<EntityType<?>> key = ResourceKey.create(Registries.ENTITY_TYPE, new net.minecraft.resources.ResourceLocation(TudursGuns.MOD_ID, path));
+-		return com.example.tudursvehiclemod.compat.Registration.register(BuiltInRegistries.ENTITY_TYPE, key, builder.build(key));
++		return com.example.tudursvehiclemod.compat.Registration.register(BuiltInRegistries.ENTITY_TYPE, key, builder.build(key.location().toString()));
+ 	}
+ }

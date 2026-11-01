@@ -1,0 +1,14 @@
+--- a/com/example/tudursguns/entity/SmokeDecoyEntity.java
++++ b/com/example/tudursguns/entity/SmokeDecoyEntity.java
+@@ -97,6 +97,11 @@
+ 	}
+ 
+ 	@Override
++	public Iterable<ItemStack> getArmorSlots() {
++		return java.util.List.of();
++	}
++
++	@Override
+ 	public ItemStack getItemBySlot(EquipmentSlot slot) {
+ 		return ItemStack.EMPTY;
+ 	}

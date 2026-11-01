@@ -1,0 +1,24 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "pattern": [
+    "V V",
+    "LVL",
+    "VLV"
+  ],
+  "key": {
+    "V": {
+      "item": "minecraft:vine"
+    },
+    "L": {
+      "tag": "minecraft:leaves"
+    }
+  },
+  "result": {
+    "count": 1,
+    "item": "tudursguns:armor",
+    "nbt": {
+      "tudursguns:armor": "tudursguns:ghillie_suit"
+    }
+  }
+}

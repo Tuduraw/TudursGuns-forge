@@ -1,0 +1,13 @@
+--- a/com/example/tudursguns/soldier/FriendlySoldierEntity.java
++++ b/com/example/tudursguns/soldier/FriendlySoldierEntity.java
+@@ -210,4 +210,10 @@
+ 		super.readAdditionalSaveData(tvmTag);
+ 		this.postPos = com.example.tudursguns.compat.Views.read(view, "post", BlockPos.CODEC).orElse(BlockPos.ZERO);
+ 	}
++
++	/** 1.20.1's EntityType.Builder has no eyeHeight: the player's eye height. */
++	@Override
++	protected float getStandingEyeHeight(net.minecraft.world.entity.Pose pose, net.minecraft.world.entity.EntityDimensions dimensions) {
++		return 1.62f;
++	}
+ }

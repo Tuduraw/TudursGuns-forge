@@ -1,0 +1,653 @@
+{
+ "_comment": "Applied by port.py to every generated source after the 1.21.11 -> 1.20.1 name migration. Based on tudursvehiclemod-forge's rules (the same 1.21 APIs, redirected to its compatibility layer under com.example.tudursvehiclemod.compat); Tudur's Guns' own additions come first and use its own layer under com.example.tudursguns.compat (src/forge/java). `imports` are whole-word replacements of fully qualified names, `regex` entries are applied in order with Python re (MULTILINE).",
+ "imports": {
+  "net.minecraft.network.codec.StreamCodec": "com.example.tudursvehiclemod.compat.mc.network.codec.StreamCodec",
+  "net.minecraft.network.codec.ByteBufCodecs": "com.example.tudursvehiclemod.compat.mc.network.codec.ByteBufCodecs",
+  "net.minecraft.network.RegistryFriendlyByteBuf": "com.example.tudursvehiclemod.compat.mc.network.RegistryFriendlyByteBuf",
+  "net.minecraft.network.protocol.common.custom.CustomPacketPayload": "com.example.tudursvehiclemod.compat.mc.network.protocol.common.custom.CustomPacketPayload",
+  "net.minecraft.world.level.storage.ValueInput": "com.example.tudursvehiclemod.compat.mc.world.level.storage.ValueInput",
+  "net.minecraft.world.level.storage.ValueOutput": "com.example.tudursvehiclemod.compat.mc.world.level.storage.ValueOutput",
+  "net.minecraft.client.DeltaTracker": "com.example.tudursvehiclemod.compat.mc.client.DeltaTracker",
+  "net.minecraft.client.renderer.SubmitNodeCollector": "com.example.tudursvehiclemod.compat.mc.client.renderer.SubmitNodeCollector",
+  "net.minecraft.client.renderer.entity.state.EntityRenderState": "com.example.tudursvehiclemod.compat.mc.client.renderer.entity.state.EntityRenderState",
+  "net.minecraft.client.renderer.entity.state.LivingEntityRenderState": "com.example.tudursvehiclemod.compat.mc.client.renderer.entity.state.LivingEntityRenderState",
+  "net.minecraft.client.renderer.entity.state.HumanoidRenderState": "com.example.tudursvehiclemod.compat.mc.client.renderer.entity.state.HumanoidRenderState",
+  "net.minecraft.client.renderer.state.CameraRenderState": "com.example.tudursvehiclemod.compat.mc.client.renderer.state.CameraRenderState",
+  "net.minecraft.resources.Identifier": "net.minecraft.resources.ResourceLocation",
+  "net.fabricmc.": "com.example.tudursvehiclemod.compat.fabric.",
+  "net.minecraft.client.renderer.entity.EntityRenderer": "com.example.tudursvehiclemod.compat.mc.client.renderer.entity.EntityRenderer",
+  "net.minecraft.core.component.DataComponentType": "com.example.tudursvehiclemod.compat.mc.core.component.DataComponentType",
+  "net.minecraft.gizmos.": "com.example.tudursvehiclemod.compat.mc.gizmos.",
+  "com.example.tudursvehiclemod.compat.fabric.fabric.api.networking.v1.EntityTrackingEvents": "com.example.tudursguns.compat.fabric.EntityTrackingEvents"
+ },
+ "regex": [
+  {
+   "_why": "TudursGuns: 1.21.4 special item models -> compat (forge.client.SpecialItemModels)",
+   "find": "net\\.minecraft\\.client\\.renderer\\.special\\.(SpecialModelRenderers?)\\b",
+   "replace": "com.example.tudursguns.compat.client.\\1"
+  },
+  {
+   "_why": "TudursGuns: HUD elements with Fabric's attach/replace -> our compat",
+   "find": "com\\.example\\.tudursvehiclemod\\.compat\\.fabric\\.fabric\\.api\\.client\\.rendering\\.v1\\.hud\\.(HudElementRegistry|VanillaHudElements)\\b",
+   "replace": "com.example.tudursguns.compat.client.\\1"
+  },
+  {
+   "_why": "TudursGuns: GUI pipelines are 1.21.6",
+   "find": "import net\\.minecraft\\.client\\.renderer\\.RenderPipelines;\\n",
+   "replace": ""
+  },
+  {
+   "find": "(\\n\\s*)(\\w+)\\.blit\\(RenderPipelines\\.GUI_TEXTURED, ",
+   "replace": "\\1com.mojang.blaze3d.systems.RenderSystem.enableBlend();\\1\\2.blit("
+  },
+  {
+   "_why": "TudursGuns: DeltaTracker is 1.21",
+   "find": "\\b(\\w+(?:\\.getInstance\\(\\))?)\\.getDeltaTracker\\(\\)\\.getGameTimeDeltaPartialTick\\(\\w+\\)",
+   "replace": "\\1.getFrameTime()"
+  },
+  {
+   "_why": "TudursGuns: Identifier left in lambdas",
+   "find": "\\bIdentifier\\.fromNamespaceAndPath\\(",
+   "replace": "new net.minecraft.resources.ResourceLocation("
+  },
+  {
+   "_why": "TudursGuns: key categories are plain strings in 1.20.1",
+   "find": "KeyMapping\\.Category (\\w+) = KeyMapping\\.Category\\.register\\((?:new net\\.minecraft\\.resources\\.ResourceLocation\\(|(?:net\\.minecraft\\.resources\\.)?(?:Identifier|ResourceLocation)\\.fromNamespaceAndPath\\()TudursGuns\\.MOD_ID, \"(\\w+)\"\\)\\);",
+   "replace": "String \\1 = \"key.category.tudursguns.\\2\";"
+  },
+  {
+   "_why": "TudursGuns: Fabric KeyBindingHelper.getBoundKeyOf -> Forge KeyMapping.getKey",
+   "find": "KeyBindingHelper\\.getBoundKeyOf\\((\\w+)\\)",
+   "replace": "\\1.getKey()"
+  },
+  {
+   "find": "InputConstants\\.isKeyDown\\((\\w+)\\.getWindow\\(\\), ",
+   "replace": "InputConstants.isKeyDown(\\1.getWindow().getWindow(), "
+  },
+  {
+   "_why": "TudursGuns: always-on-top box gizmos -> compat Outlines",
+   "find": "Gizmos\\.cuboid\\(([^;]*?), GizmoStyle\\.stroke\\((\\w+)\\)\\)\\.setAlwaysOnTop\\(\\);",
+   "replace": "com.example.tudursguns.compat.client.Outlines.box(\\1, \\2);"
+  },
+  {
+   "_why": "TudursGuns: 1.20.1 renderMapHand takes a buffer source",
+   "find": "\\.tudursguns\\$renderArm\\((\\w+), (\\w+), ",
+   "replace": ".tudursguns$renderArm(\\1, \\2.buffers(), "
+  },
+  {
+   "_why": "TudursGuns: 1.21.9 MouseButtonEvent -> 1.20.1 (x, y, button)",
+   "find": "public boolean mouseClicked\\(MouseButtonEvent (\\w+), boolean \\w+\\) \\{",
+   "replace": "public boolean mouseClicked(double tvmX, double tvmY, int tvmButton) {"
+  },
+  {
+   "find": "\\(int\\) click\\.x\\(\\)",
+   "replace": "(int) tvmX"
+  },
+  {
+   "find": "\\(int\\) click\\.y\\(\\)",
+   "replace": "(int) tvmY"
+  },
+  {
+   "find": "click\\.button\\(\\)",
+   "replace": "tvmButton"
+  },
+  {
+   "find": "super\\.mouseClicked\\(click, \\w+\\)",
+   "replace": "super.mouseClicked(tvmX, tvmY, tvmButton)"
+  },
+  {
+   "find": "import net\\.minecraft\\.client\\.input\\.MouseButtonEvent;\\n",
+   "replace": ""
+  },
+  {
+   "_why": "TudursGuns: 1.20.2 horizontal scroll",
+   "find": "public boolean mouseScrolled\\(double (\\w+), double (\\w+), double \\w+, double (\\w+)\\)",
+   "replace": "public boolean mouseScrolled(double \\1, double \\2, double \\3)"
+  },
+  {
+   "find": "super\\.mouseScrolled\\((\\w+), (\\w+), \\w+, (\\w+)\\)",
+   "replace": "super.mouseScrolled(\\1, \\2, \\3)"
+  },
+  {
+   "_why": "1.21.2 releaseUsing returns boolean; 1.20.1 void",
+   "find": "public boolean releaseUsing\\(ItemStack (\\w+), Level (\\w+), LivingEntity (\\w+), int (\\w+)\\)\\s*\\{",
+   "replace": "public void releaseUsing(ItemStack \\1, Level \\2, LivingEntity \\3, int \\4) {\n\t\ttvm$releaseUsing(\\1, \\2, \\3, \\4);\n\t}\n\n\tprivate boolean tvm$releaseUsing(ItemStack \\1, Level \\2, LivingEntity \\3, int \\4) {"
+  },
+  {
+   "_why": "1.20.5 getUseDuration(stack, user)",
+   "find": "public int getUseDuration\\(ItemStack (\\w+), LivingEntity \\w+\\)",
+   "replace": "public int getUseDuration(ItemStack \\1)"
+  },
+  {
+   "_why": "1.20.5 getUseDuration(stack, user) calls",
+   "find": "(?<!int )\\bgetUseDuration\\((\\w+), \\w+\\)",
+   "replace": "getUseDuration(\\1)"
+  },
+  {
+   "_why": "1.21.5 inventoryTick(stack, ServerLevel, entity, EquipmentSlot); 1.20.1 (stack, Level, entity, int, boolean), both sides",
+   "find": "public void inventoryTick\\(ItemStack (\\w+), ServerLevel (\\w+), Entity (\\w+), (?:@Nullable )?EquipmentSlot (\\w+)\\)\\s*\\{",
+   "replace": "public void inventoryTick(ItemStack \\1, net.minecraft.world.level.Level tvmLevel, Entity \\3, int tvmSlot, boolean tvmSelected) {\n\t\tif (!(tvmLevel instanceof ServerLevel \\2)) {\n\t\t\treturn;\n\t\t}"
+  },
+  {
+   "_why": "1.21 dropCustomDeathLoot(ServerLevel, source, byPlayer); 1.20.1 (source, looting, byPlayer)",
+   "find": "void dropCustomDeathLoot\\((?:[\\w.]+\\.)?ServerLevel \\w+, DamageSource (\\w+), boolean (\\w+)\\)",
+   "replace": "void dropCustomDeathLoot(DamageSource \\1, int tvmLooting, boolean \\2)"
+  },
+  {
+   "_why": "1.20.1 canBeLeashed(Player)",
+   "find": "public boolean canBeLeashed\\(\\)",
+   "replace": "public boolean canBeLeashed(net.minecraft.world.entity.player.Player tvmPlayer)"
+  },
+  {
+   "_why": "1.20.1 finalizeSpawn has the spawn NBT too",
+   "find": "public SpawnGroupData finalizeSpawn\\(ServerLevelAccessor (\\w+), DifficultyInstance (\\w+), MobSpawnType (\\w+), SpawnGroupData (\\w+)\\)",
+   "replace": "public SpawnGroupData finalizeSpawn(ServerLevelAccessor \\1, DifficultyInstance \\2, MobSpawnType \\3, SpawnGroupData \\4, @javax.annotation.Nullable net.minecraft.nbt.CompoundTag tvmTag)"
+  },
+  {
+   "find": "super\\.finalizeSpawn\\((\\w+), (\\w+), (\\w+), (\\w+)\\)",
+   "replace": "super.finalizeSpawn(\\1, \\2, \\3, \\4, tvmTag)"
+  },
+  {
+   "_why": "1.20.5 attribute modifiers are keyed by id; 1.20.1 by UUID + name",
+   "find": "\\bnew AttributeModifier\\((\\w+), ",
+   "replace": "com.example.tudursguns.compat.Attrs.modifier(\\1, "
+  },
+  {
+   "find": "\\.(getModifier|removeModifier)\\((\\w*MODIFIER_ID\\w*)\\)",
+   "replace": ".\\1(com.example.tudursguns.compat.Attrs.uuid(\\2))"
+  },
+  {
+   "find": "\\b(\\w+)\\.amount\\(\\) != ",
+   "replace": "\\1.getAmount() != "
+  },
+  {
+   "_why": "Direction.getUnitVec3 on a call result",
+   "find": "\\b([\\w.]+\\(\\))\\.getUnitVec3\\(\\)",
+   "replace": "net.minecraft.world.phys.Vec3.atLowerCornerOf(\\1.getNormal())"
+  },
+  {
+   "_why": "1.21 spawnAtLocation(ServerLevel, stack)",
+   "find": "\\.spawnAtLocation\\(\\w+, ",
+   "replace": ".spawnAtLocation("
+  },
+  {
+   "_why": "1.20.5 ignoreSwapAnimation: DefinedItem.shouldCauseReequipAnimation does this in 1.20.1",
+   "find": "\\.ignoreSwapAnimation\\(\\)",
+   "replace": ""
+  },
+  {
+   "_why": "Fabric ServerPlayConnectionEvents.DISCONNECT (the vehicle mod's compat has JOIN only)",
+   "find": "\\bServerPlayConnectionEvents\\.DISCONNECT\\.register\\(",
+   "replace": "com.example.tudursguns.compat.fabric.Disconnect.register("
+  },
+  {
+   "_why": "item components -> NBT-backed compat DataComponentType (Tudur's Guns' ModComponents)",
+   "find": "((?:\\w+\\.)*\\w+(?:\\(\\))?)\\.(get|set|has|remove|getOrDefault)\\((?:com\\.example\\.tudursguns\\.registry\\.)?ModComponents\\.((?!DRONE_ROUTE_)\\w+)(, )?",
+   "replace": "com.example.tudursguns.registry.ModComponents.\\3.\\2(\\1\\4"
+  },
+  {
+   "_why": "the vehicle mod's own components (Drone Route Book)",
+   "find": "((?:\\w+\\.)*\\w+(?:\\(\\))?)\\.(get|set|has|remove|getOrDefault)\\(ModComponents\\.(DRONE_ROUTE_\\w+)(, )?",
+   "replace": "com.example.tudursvehiclemod.item.ModComponents.\\3.\\2(\\1\\4"
+  },
+  {
+   "_why": "components chosen at run time: stack.get(type) -> type.get(stack)",
+   "find": "\\b(\\w+)\\.(get|set|has|remove|getOrDefault)\\((Firing\\.ammoComponent\\(\\w+\\)|this\\.component|type)(, |\\))",
+   "replace": "\\3.\\2(\\1\\4"
+  },
+  {
+   "_why": "1.21.6 ValueInput/ValueOutput codec access -> Tudur's Guns compat helpers on the tag-backed views",
+   "find": "\\bview\\.(read|store|storeNullable)\\(",
+   "replace": "com.example.tudursguns.compat.Views.\\1(view, "
+  },
+  {
+   "_why": "1.21.5 appendHoverText (Consumer imported, not fully qualified)",
+   "find": "public void appendHoverText\\(ItemStack (\\w+), TooltipContext \\w+, (?:net\\.minecraft\\.world\\.item\\.component\\.)?TooltipDisplay \\w+,\\s*(?:java\\.util\\.function\\.)?Consumer<(?:net\\.minecraft\\.network\\.chat\\.)?Component> (\\w+), ((?:net\\.minecraft\\.world\\.item\\.)?TooltipFlag) (\\w+)\\)\\s*\\{",
+   "replace": "public void appendHoverText(ItemStack \\1, @javax.annotation.Nullable net.minecraft.world.level.Level tvmLevel, java.util.List<net.minecraft.network.chat.Component> tvmTooltip, \\3 \\4) {\n\t\tjava.util.function.Consumer<net.minecraft.network.chat.Component> \\2 = tvmTooltip::add;"
+  },
+  {
+   "_why": "1.20.5 hurtAndBreak(amount, entity, hand/slot) and consume(n, entity)",
+   "find": "\\b(\\w+)\\.hurtAndBreak\\(([^,;]+), (\\w+), (\\w+)\\);",
+   "replace": "com.example.tudursguns.compat.Items.hurt(\\1, \\2, \\3, \\4);"
+  },
+  {
+   "find": "\\b(\\w+)\\.consume\\((\\d+), (\\w+)\\);",
+   "replace": "com.example.tudursguns.compat.Items.consume(\\1, \\2, \\3);"
+  },
+  {
+   "_why": "1.21 Direction.getUnitVec3()",
+   "find": "\\b(\\w+)\\.getUnitVec3\\(\\)",
+   "replace": "net.minecraft.world.phys.Vec3.atLowerCornerOf(\\1.getNormal())"
+  },
+  {
+   "_why": "1.20.1 setSecondsOnFire takes whole seconds",
+   "find": "\\.setSecondsOnFire\\(Math\\.max\\(1f, ([^;]*?) / 20f\\)\\)",
+   "replace": ".setSecondsOnFire(Math.max(1, \\1 / 20))"
+  },
+  {
+   "_why": "1.20.1 getMenuProvider is public",
+   "find": "\\bprotected MenuProvider getMenuProvider\\(",
+   "replace": "public MenuProvider getMenuProvider("
+  },
+  {
+   "_why": "1.20.1 Mob.customServerAiStep()",
+   "find": "\\bprotected void customServerAiStep\\((?:[\\w.]+\\.)?ServerLevel (\\w+)\\)\\s*\\{\\n(\\s*)super\\.customServerAiStep\\(\\w+\\);",
+   "replace": "protected void customServerAiStep() {\n\\2super.customServerAiStep();\n\\2ServerLevel \\1 = (ServerLevel) this.level();"
+  },
+  {
+   "_why": "DataResult.Error (DFU 7) -> PartialResult (DFU 6)",
+   "find": "DataResult\\.Error::message",
+   "replace": "e -> e.message()"
+  },
+  {
+   "_why": "1.20.5 ScreenHandler.addStandardInventorySlots",
+   "find": "this\\.addStandardInventorySlots\\((\\w+), ([^;]+)\\);",
+   "replace": "com.example.tudursguns.compat.Menus.addPlayerSlots(this::addSlot, \\1, \\2);"
+  },
+  {
+   "_why": "StreamCodec on raw ByteBuf: the compat codecs are on FriendlyByteBuf",
+   "find": "StreamCodec<ByteBuf, ",
+   "replace": "StreamCodec<net.minecraft.network.FriendlyByteBuf, "
+  },
+  {
+   "_why": "ByteBufCodecs helpers the vehicle mod's compat lacks",
+   "find": "\\bByteBufCodecs\\.(VAR_LONG|optional|fromCodec)\\b",
+   "replace": "com.example.tudursguns.compat.Codecs.\\1"
+  },
+  {
+   "find": "\\bByteBufCodecs\\.list\\((\\w[\\w.]*)\\)",
+   "replace": "com.example.tudursguns.compat.Codecs.list(\\1)"
+  },
+  {
+   "_why": "EquipmentSlot.CODEC (1.20.5)",
+   "find": "\\bEquipmentSlot\\.CODEC\\b",
+   "replace": "com.example.tudursguns.compat.Codecs.EQUIPMENT_SLOT"
+  },
+  {
+   "_why": "Fabric PlayerLookup.around",
+   "find": "\\bPlayerLookup\\.around\\(",
+   "replace": "com.example.tudursguns.compat.Players.around("
+  },
+  {
+   "_why": "1.21.11 BlockPos/Identifier/GlobalPos.STREAM_CODEC do not exist in 1.20.1",
+   "find": "\\bBlockPos\\.STREAM_CODEC\\b",
+   "replace": "com.example.tudursvehiclemod.compat.mc.network.codec.ByteBufCodecs.BLOCK_POS"
+  },
+  {
+   "find": "\\bResourceLocation\\.STREAM_CODEC\\b",
+   "replace": "com.example.tudursvehiclemod.compat.mc.network.codec.ByteBufCodecs.RESOURCE_LOCATION"
+  },
+  {
+   "find": "net\\.minecraft\\.core\\.GlobalPos\\.STREAM_CODEC\\b",
+   "replace": "com.example.tudursvehiclemod.compat.mc.network.codec.ByteBufCodecs.GLOBAL_POS"
+  },
+  {
+   "_why": "ResourceLocation.fromNamespaceAndPath / withDefaultNamespace are 1.21 factories; 1.20.1 has constructors",
+   "find": "\\b(?:net\\.minecraft\\.resources\\.)?ResourceLocation\\.fromNamespaceAndPath\\(",
+   "replace": "new net.minecraft.resources.ResourceLocation("
+  },
+  {
+   "find": "\\b(?:net\\.minecraft\\.resources\\.)?ResourceLocation\\.withDefaultNamespace\\(",
+   "replace": "new net.minecraft.resources.ResourceLocation("
+  },
+  {
+   "_why": "1.20.1 save/load hooks take a CompoundTag; wrap it so the 1.21.6 view code stays unchanged",
+   "find": "\\b(void (?:load|saveAdditional|readAdditionalSaveData|addAdditionalSaveData))\\((?:[\\w.]+\\.)?ValueInput (\\w+)\\)\\s*\\{",
+   "replace": "\\1(net.minecraft.nbt.CompoundTag tvmTag) {\n\t\tcom.example.tudursvehiclemod.compat.mc.world.level.storage.ValueInput \\2 = com.example.tudursvehiclemod.compat.mc.world.level.storage.ValueInput.of(tvmTag);"
+  },
+  {
+   "find": "\\b(void (?:load|saveAdditional|readAdditionalSaveData|addAdditionalSaveData))\\((?:[\\w.]+\\.)?ValueOutput (\\w+)\\)\\s*\\{",
+   "replace": "\\1(net.minecraft.nbt.CompoundTag tvmTag) {\n\t\tcom.example.tudursvehiclemod.compat.mc.world.level.storage.ValueOutput \\2 = com.example.tudursvehiclemod.compat.mc.world.level.storage.ValueOutput.of(tvmTag);"
+  },
+  {
+   "find": "\\bsuper\\.(load|saveAdditional|readAdditionalSaveData|addAdditionalSaveData)\\(view\\)",
+   "replace": "super.\\1(tvmTag)"
+  },
+  {
+   "_why": "1.21 ServerLevel.sendParticles(type, force, important, x, y, z, count, dx, dy, dz, speed); 1.20.1 has no force/important flags",
+   "find": "\\.sendParticles\\(([^;]*?),\\s*(?:true|false),\\s*(?:true|false),",
+   "replace": ".sendParticles(\\1,"
+  },
+  {
+   "_why": "1.21 Registry.getValue(id) is Registry.get(id) in 1.20.1",
+   "find": "\\b(BuiltInRegistries\\.[A-Z_]+)\\.getValue\\(",
+   "replace": "\\1.get("
+  },
+  {
+   "find": "\\bnew (?:net\\.minecraft\\.core\\.particles\\.)?DustParticleOptions\\(",
+   "replace": "com.example.tudursvehiclemod.compat.Compat.dust("
+  },
+  {
+   "find": "\\bnet\\.minecraft\\.world\\.item\\.component\\.DyedItemColor\\.getOrDefault\\(",
+   "replace": "com.example.tudursvehiclemod.compat.Compat.dyedColor("
+  },
+  {
+   "_why": "Entity.needsSync (1.21) is hurtMarked in 1.20.1",
+   "find": "\\.needsSync\\b",
+   "replace": ".hurtMarked"
+  },
+  {
+   "find": "\\b([\\w.()]+)\\.absSnapRotationTo\\(",
+   "replace": "com.example.tudursvehiclemod.compat.Compat.snapRotation(\\1, "
+  },
+  {
+   "find": "\\bthis\\.level\\(\\)\\.getEntity\\((\\w+[Uu]uid\\w*)\\)",
+   "replace": "com.example.tudursvehiclemod.compat.Compat.entityByUuid(this.level(), \\1)"
+  },
+  {
+   "_why": "1.20.5+ defineSynchedData(Builder); 1.20.1 defineSynchedData() + entityData.define",
+   "find": "\\bvoid defineSynchedData\\((?:[\\w.]+\\.)?SynchedEntityData\\.Builder (\\w+)\\)\\s*\\{",
+   "replace": "void defineSynchedData() {\n\t\tcom.example.tudursvehiclemod.compat.SyncedDataBuilder \\1 = new com.example.tudursvehiclemod.compat.SyncedDataBuilder(this.entityData);"
+  },
+  {
+   "find": "\\bsuper\\.defineSynchedData\\(\\w+\\)",
+   "replace": "super.defineSynchedData()"
+  },
+  {
+   "_why": "1.20.1 startRiding(entity, force) has no emitEvent flag",
+   "find": "\\.startRiding\\(([^,()]+),\\s*(true|false),\\s*(?:true|false)\\)",
+   "replace": ".startRiding(\\1, \\2)"
+  },
+  {
+   "find": "\\bcauseFallDamage\\(double ",
+   "replace": "causeFallDamage(float "
+  },
+  {
+   "_why": "1.21.2 hurtServer(ServerLevel, source, amount) is hurt(source, amount) in 1.20.1 (also called on the client there)",
+   "find": "\\bpublic boolean hurtServer\\((?:[\\w.]+\\.)?ServerLevel (\\w+), (?:[\\w.]+\\.)?DamageSource (\\w+), float (\\w+)\\)\\s*\\{",
+   "replace": "public boolean hurt(net.minecraft.world.damagesource.DamageSource \\2, float \\3) {\n\t\tif (!(this.level() instanceof net.minecraft.server.level.ServerLevel \\1)) {\n\t\t\treturn false;\n\t\t}"
+  },
+  {
+   "find": "\\.hurtServer\\(\\s*(?:\\([\\w.]+\\)\\s*)?[\\w.]+(?:\\(\\))?,\\s*",
+   "replace": ".hurt("
+  },
+  {
+   "_why": "1.21 EntityType.create(level, consumer, pos, reason, ...); 1.20.1 takes an extra CompoundTag before the consumer",
+   "find": "\\.create\\((\\w+), (?=\\(?\\w+\\)? ->)",
+   "replace": ".create(\\1, null, "
+  },
+  {
+   "find": "\\bContainerHelper\\.(loadAllItems|saveAllItems)\\(view,",
+   "replace": "ContainerHelper.\\1(view.tag(),"
+  },
+  {
+   "_why": "1.20.1 getAddEntityPacket() has no ServerEntity parameter",
+   "find": "getAddEntityPacket\\(ServerEntity \\w+\\)",
+   "replace": "getAddEntityPacket()"
+  },
+  {
+   "find": "new ClientboundAddEntityPacket\\(this, \\w+\\)",
+   "replace": "new ClientboundAddEntityPacket(this)"
+  },
+  {
+   "_why": "1.21.2 onRemoval(reason). 1.20.1's setRemoved is final; Forge calls onRemovedFromWorld() for every removal (kill, discard, chunk unload, dimension change) with the reason already set",
+   "find": "\\bpublic void onRemoval\\(((?:net\\.minecraft\\.world\\.entity\\.)?Entity\\.RemovalReason) (\\w+)\\)\\s*\\{\\s*super\\.onRemoval\\(\\w+\\);",
+   "replace": "public void onRemovedFromWorld() {\n\t\tsuper.onRemovedFromWorld();\n\t\t\\1 \\2 = this.getRemovalReason() != null ? this.getRemovalReason() : net.minecraft.world.entity.Entity.RemovalReason.UNLOADED_TO_CHUNK;"
+  },
+  {
+   "find": "\\b(\\w+)\\.getLastClientInput\\(\\)\\.jump\\(\\)",
+   "replace": "com.example.tudursvehiclemod.compat.Compat.isJumping(\\1)"
+  },
+  {
+   "find": "\\breturn player\\.isJumping\\(\\);",
+   "replace": "return com.example.tudursvehiclemod.compat.Compat.isJumping(player);"
+  },
+  {
+   "_why": "1.21.2 isInvulnerableTo(ServerLevel, source)",
+   "find": "\\bisInvulnerableTo\\((?:[\\w.]+\\.)?ServerLevel \\w+, ",
+   "replace": "isInvulnerableTo("
+  },
+  {
+   "_why": "1.21.2 canBeCollidedWith(Entity)",
+   "find": "\\bpublic boolean canBeCollidedWith\\((?:[\\w.]+\\.)?Entity \\w+\\)",
+   "replace": "public boolean canBeCollidedWith()"
+  },
+  {
+   "_why": "1.21.2 canSimulateMovement() does not exist in 1.20.1 - keep it as a plain method",
+   "find": "@Override(\\s+public boolean canSimulateMovement\\(\\))",
+   "replace": "\\1"
+  },
+  {
+   "_why": "1.21 makeBoundingBox(Vec3 pos); 1.20.1 makeBoundingBox() at the current position",
+   "find": "\\bprotected (net\\.minecraft\\.world\\.phys\\.)?AABB makeBoundingBox\\(Vec3 (\\w+)\\)\\s*\\{",
+   "replace": "protected \\1AABB makeBoundingBox() {\n\t\tVec3 \\2 = this.position();"
+  },
+  {
+   "find": "\\bsuper\\.makeBoundingBox\\(\\w+\\)",
+   "replace": "super.makeBoundingBox()"
+  },
+  {
+   "_why": "LivingEntity's save hooks are public in 1.20.1 (protected in Entity); public works for both",
+   "find": "\\bprotected void (readAdditionalSaveData|addAdditionalSaveData)\\(",
+   "replace": "public void \\1("
+  },
+  {
+   "_why": "item components (1.20.5) -> NBT-backed compat DataComponentType",
+   "find": "\\bRegistry\\.register\\(\\s*BuiltInRegistries\\.DATA_COMPONENT_TYPE,\\s*",
+   "replace": "com.example.tudursvehiclemod.compat.mc.core.component.DataComponentType.register("
+  },
+  {
+   "_why": "1.21.2 registry-key settings: not needed in 1.20.1",
+   "find": "\\.setId\\(\\w+\\)",
+   "replace": ""
+  },
+  {
+   "find": "\\.useBlockDescriptionPrefix\\(\\)",
+   "replace": ""
+  },
+  {
+   "_why": "1.20.3+ block codecs: 1.20.1 blocks have none",
+   "find": "\\n\\s*public static final MapCodec<\\w+> CODEC = simpleCodec\\(\\w+::new\\);\\n",
+   "replace": "\n"
+  },
+  {
+   "find": "\\n\\s*@Override\\s*\\n\\s*protected MapCodec<[^>]*(?:<[^>]*>)?[^>]*> codec\\(\\) \\{\\s*return CODEC;\\s*\\}\\n",
+   "replace": "\n"
+  },
+  {
+   "_why": "BlockBehaviour methods are public in 1.20.1",
+   "find": "\\bprotected ((?:[\\w.]+\\.)?\\w+(?:<[^>]+>)?) (getRenderShape|neighborChanged|hasAnalogOutputSignal|getAnalogOutputSignal|onRemove|getShape|getCollisionShape|onPlace|tick|randomTick|rotate|mirror|isSignalSource|getSignal|updateShape)\\(",
+   "replace": "public \\1 \\2("
+  },
+  {
+   "_why": "1.21.2 neighborChanged(.., Orientation, boolean); 1.20.1 passes the neighbour's BlockPos",
+   "find": "(?:net\\.minecraft\\.world\\.level\\.redstone\\.)?Orientation (\\w+), boolean",
+   "replace": "BlockPos \\1, boolean"
+  },
+  {
+   "_why": "1.20.5 useWithoutItem/useItemOn are a single use(...) in 1.20.1",
+   "find": "\\bprotected InteractionResult useWithoutItem\\(BlockState (\\w+), Level (\\w+), BlockPos (\\w+), Player (\\w+), BlockHitResult (\\w+)\\)",
+   "replace": "public InteractionResult use(BlockState \\1, Level \\2, BlockPos \\3, Player \\4, net.minecraft.world.InteractionHand tvmHand, BlockHitResult \\5)"
+  },
+  {
+   "find": "@Override(\\s+)protected ((?:[\\w.]+\\.)?(?:Item)?InteractionResult) useItemOn\\(",
+   "replace": "\\1protected \\2 tvm$useItemOn("
+  },
+  {
+   "_why": "1.20.1 BlockEntity.load is public",
+   "find": "\\bprotected void load\\(net\\.minecraft\\.nbt\\.CompoundTag",
+   "replace": "public void load(net.minecraft.nbt.CompoundTag"
+  },
+  {
+   "_why": "1.21.2 Item.use returns InteractionResult; 1.20.1 InteractionResultHolder<ItemStack>",
+   "find": "@Override(\\s+)public InteractionResult use\\(Level (\\w+), Player (\\w+), InteractionHand (\\w+)\\)\\s*\\{",
+   "replace": "@Override\\1public net.minecraft.world.InteractionResultHolder<net.minecraft.world.item.ItemStack> use(Level \\2, Player \\3, InteractionHand \\4) {\n\t\treturn new net.minecraft.world.InteractionResultHolder<>(this.tvm$use(\\2, \\3, \\4), \\3.getItemInHand(\\4));\n\t}\n\n\tprivate InteractionResult tvm$use(Level \\2, Player \\3, InteractionHand \\4) {"
+  },
+  {
+   "_why": "1.21.5 appendHoverText(stack, context, display, consumer, flag); 1.20.1 (stack, level, list, flag)",
+   "find": "public void appendHoverText\\(ItemStack (\\w+), TooltipContext \\w+, (?:net\\.minecraft\\.world\\.item\\.component\\.)?TooltipDisplay \\w+,\\s*java\\.util\\.function\\.Consumer<(?:net\\.minecraft\\.network\\.chat\\.)?Component> (\\w+), ((?:net\\.minecraft\\.world\\.item\\.)?TooltipFlag) (\\w+)\\)\\s*\\{",
+   "replace": "public void appendHoverText(ItemStack \\1, @javax.annotation.Nullable net.minecraft.world.level.Level tvmLevel, java.util.List<net.minecraft.network.chat.Component> tvmTooltip, \\3 \\4) {\n\t\tjava.util.function.Consumer<net.minecraft.network.chat.Component> \\2 = tvmTooltip::add;"
+  },
+  {
+   "find": "\\.requires\\(Commands\\.hasPermission\\(Commands\\.(\\w+)\\)\\)",
+   "replace": ".requires(src -> src.hasPermission(Commands.\\1))"
+  },
+  {
+   "_why": "1.21.2 EntityType.create(level, reason); 1.20.1 create(level)",
+   "find": "\\.create\\(([\\w.()]+), (?:net\\.minecraft\\.world\\.entity\\.)?MobSpawnType\\.\\w+\\)",
+   "replace": ".create(\\1)"
+  },
+  {
+   "_why": "1.21.5 BlockEntity.preRemoveSideEffects does not exist in 1.20.1: it becomes a plain method, called from the block's onRemove (added below) while the block entity is still in place",
+   "find": "@Override(\\s+)public void preRemoveSideEffects\\(",
+   "replace": "\\1public void preRemoveSideEffects("
+  },
+  {
+   "find": "\\bsuper\\.preRemoveSideEffects\\((\\w+), \\w+\\);",
+   "replace": "if (this.level != null && ((Object) this) instanceof net.minecraft.world.Container tvmContainer) {\\n\\t\\t\\tnet.minecraft.world.Containers.dropContents(this.level, \\1, tvmContainer);\\n\\t\\t}"
+  },
+  {
+   "find": "^(public class \\w+Block extends BaseEntityBlock \\{)",
+   "replace": "\\1\n\n\t/** Forge 1.20.1: runs the block entity's removal cleanup (1.21.5 preRemoveSideEffects) and drops its inventory when the block is broken or replaced. */\n\t@Override\n\tpublic void onRemove(net.minecraft.world.level.block.state.BlockState state, net.minecraft.world.level.Level level, net.minecraft.core.BlockPos pos, net.minecraft.world.level.block.state.BlockState newState, boolean moved) {\n\t\tif (!state.is(newState.getBlock())) {\n\t\t\tcom.example.tudursvehiclemod.compat.Compat.preRemove(level, pos, state);\n\t\t}\n\t\tsuper.onRemove(state, level, pos, newState, moved);\n\t}"
+  },
+  {
+   "find": "\\.setLight\\(",
+   "replace": ".uv2("
+  },
+  {
+   "find": "\\.setNormal\\((\\w+), ([^;]*)\\);",
+   "replace": ".normal(\\1.normal(), \\2).endVertex();"
+  },
+  {
+   "find": "\\b\\w+\\.collectPerTickGizmos\\(\\)",
+   "replace": "com.example.tudursvehiclemod.compat.mc.gizmos.Gizmos.collectPerTick()"
+  },
+  {
+   "find": "getMainCamera\\(\\)\\.position\\(\\)",
+   "replace": "getMainCamera().getPosition()"
+  },
+  {
+   "find": "new DynamicTexture\\((?:[\\w.]+::toString|\\(\\) -> [\\w.]+\\(\\)), ",
+   "replace": "new DynamicTexture("
+  },
+  {
+   "find": "(\\w+)\\.getPixel\\(",
+   "replace": "com.example.tudursvehiclemod.compat.Compat.getPixelArgb(\\1, ",
+   "files": "**/AddonTextureLoader.java"
+  },
+  {
+   "find": "(\\w+)\\.setPixel\\(",
+   "replace": "com.example.tudursvehiclemod.compat.Compat.setPixelArgb(\\1, ",
+   "files": "**/AddonTextureLoader.java"
+  },
+  {
+   "find": "Object gpuTexture = texture\\.getTexture\\(\\);",
+   "replace": "if (texture.getId() > 0) {\n\t\t\t\treturn texture.getId(); // Forge 1.20.1: the GL name is public\n\t\t\t}\n\t\t\tObject gpuTexture = null;",
+   "files": "**/AddonTextureLoader.java"
+  },
+  {
+   "find": "KeyMapping\\.Category (\\w+) = KeyMapping\\.Category\\.register\\(new net\\.minecraft\\.resources\\.ResourceLocation\\(\\\"(\\w+)\\\", \\\"(\\w+)\\\"\\)\\);",
+   "replace": "String \\1 = \"key.category.\\2.\\3\";"
+  },
+  {
+   "find": "net\\.minecraft\\.world\\.phys\\.shapes\\.CollisionContext\\.empty\\(\\)\\)",
+   "replace": "(net.minecraft.world.entity.Entity) null)",
+   "files": "**/SearchLightIllumination.java"
+  },
+  {
+   "find": "(\\w+)\\.get(String|Int|Boolean|Float|Double|Long)Or\\(",
+   "replace": "com.example.tudursvehiclemod.compat.Compat.nbt\\2Or(\\1, ",
+   "files": "**/FireSupportScreen.java"
+  },
+  {
+   "find": "(\\w+)\\.get(List|Compound)OrEmpty\\(",
+   "replace": "com.example.tudursvehiclemod.compat.Compat.nbt\\2OrEmpty(\\1, ",
+   "files": "**/FireSupportScreen.java"
+  },
+  {
+   "find": "\\.getIntArray\\((\\\"\\w+\\\")\\)\\.orElse\\(null\\)",
+   "replace": ".getIntArray(\\1)",
+   "files": "**/FireSupportScreen.java"
+  },
+  {
+   "find": "@Override\\n(\\s*)public void render\\((\\w+) state, PoseStack (\\w+), SubmitNodeCollector",
+   "replace": "@Override\\n\\1public void submit(\\2 state, PoseStack \\3, SubmitNodeCollector"
+  },
+  {
+   "find": "\\bsuper\\.render\\(state, (\\w+), (\\w+), (\\w+)\\)",
+   "replace": "super.submit(state, \\1, \\2, \\3)"
+  },
+  {
+   "find": "extends SingleQuadParticle\\b",
+   "replace": "extends net.minecraft.client.particle.TextureSheetParticle",
+   "files": "**/client/particle/*.java"
+  },
+  {
+   "find": "super\\((\\w+), (\\w+), (\\w+), (\\w+), (sprite)\\);",
+   "replace": "super(\\1, \\2, \\3, \\4);\\n\\t\\tthis.setSprite(\\5);",
+   "files": "**/client/particle/*.java"
+  },
+  {
+   "find": "protected Layer getLayer\\(\\) \\{\\n(\\s*)return Layer\\.TRANSLUCENT;",
+   "replace": "public net.minecraft.client.particle.ParticleRenderType getRenderType() {\\n\\1return net.minecraft.client.particle.ParticleRenderType.PARTICLE_SHEET_TRANSLUCENT;",
+   "files": "**/client/particle/*.java"
+  },
+  {
+   "find": "protected Layer getLayer\\(\\) \\{\\n(\\s*)return Layer\\.OPAQUE;",
+   "replace": "public net.minecraft.client.particle.ParticleRenderType getRenderType() {\\n\\1return net.minecraft.client.particle.ParticleRenderType.PARTICLE_SHEET_OPAQUE;",
+   "files": "**/client/particle/*.java"
+  },
+  {
+   "find": "double velocityZ, RandomSource random\\) \\{",
+   "replace": "double velocityZ) {\n\t\t\tRandomSource random = world.random;",
+   "files": "**/client/particle/*.java"
+  },
+  {
+   "find": "\\.pose\\(\\)\\.pushMatrix\\(\\)",
+   "replace": ".pose().pushPose()"
+  },
+  {
+   "find": "\\.pose\\(\\)\\.popMatrix\\(\\)",
+   "replace": ".pose().popPose()"
+  },
+  {
+   "find": "\\.pose\\(\\)\\.(translate|scale)\\(([^;]*)\\);",
+   "replace": ".pose().\\1(\\2, \\1Z);",
+   "files": "**/client/hud/HudCommand.java"
+  },
+  {
+   "find": "translateZ\\)",
+   "replace": "0f)",
+   "files": "**/client/hud/HudCommand.java"
+  },
+  {
+   "find": "scaleZ\\)",
+   "replace": "1f)",
+   "files": "**/client/hud/HudCommand.java"
+  },
+  {
+   "find": "\\.pose\\(\\)\\.rotate\\(([^;]*)\\);",
+   "replace": ".pose().mulPose(com.mojang.math.Axis.ZP.rotation(\\1));"
+  },
+  {
+   "find": "\\.blit\\(net\\.minecraft\\.client\\.renderer\\.RenderPipelines\\.GUI_TEXTURED, ",
+   "replace": ".blit("
+  },
+  {
+   "find": "(drawWordWrap\\([^;]*), (?:true|false)\\);",
+   "replace": "\\1);"
+  },
+  {
+   "find": "keyPressed\\(net\\.minecraft\\.client\\.input\\.KeyEvent (\\w+)\\)",
+   "replace": "keyPressed(int tvmKey, int tvmScan, int tvmMods)"
+  },
+  {
+   "find": "\\binput\\.key\\(\\)",
+   "replace": "tvmKey",
+   "files": "**/client/screen/FireSupportScreen.java"
+  },
+  {
+   "find": "keyPressed\\(input\\)",
+   "replace": "keyPressed(tvmKey, tvmScan, tvmMods)",
+   "files": "**/client/screen/FireSupportScreen.java"
+  },
+  {
+   "find": "(?<![\\w.])Registry\\.register\\(",
+   "replace": "com.example.tudursvehiclemod.compat.Registration.register("
+  },
+  {
+   "find": "(FabricDefaultAttributeRegistry\\.register\\(\\s*[^;]*?), ([\\w.]+)\\.createAttributes\\(\\)\\);",
+   "replace": "\\1, \\2::createAttributes);"
+  }
+ ]
+}

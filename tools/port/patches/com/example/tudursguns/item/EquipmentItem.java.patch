@@ -1,0 +1,48 @@
+--- a/com/example/tudursguns/item/EquipmentItem.java
++++ b/com/example/tudursguns/item/EquipmentItem.java
+@@ -7,7 +7,6 @@
+ import java.util.Locale;
+ import java.util.function.Consumer;
+ import net.minecraft.ChatFormatting;
+-import net.minecraft.core.component.DataComponents;
+ import net.minecraft.network.chat.Component;
+ import net.minecraft.server.level.ServerLevel;
+ import net.minecraft.server.level.ServerPlayer;
+@@ -127,17 +126,27 @@
+ 	}
+ 
+ 	public static void applyComponents(ItemStack stack, EquipmentDefinition def) {
+-		if (def.uses() > 0) {
+-			setIfChanged(stack, DataComponents.MAX_STACK_SIZE, 1);
+-			setIfChanged(stack, DataComponents.MAX_DAMAGE, def.uses());
+-			if (!stack.has(DataComponents.DAMAGE)) {
+-				stack.set(DataComponents.DAMAGE, 0);
+-			}
+-		} else {
+-			stack.remove(DataComponents.MAX_DAMAGE);
+-			stack.remove(DataComponents.DAMAGE);
+-			setIfChanged(stack, DataComponents.MAX_STACK_SIZE, def.maxStack());
++		// Forge 1.20.1: uses and stack size come from getMaxDamage / getMaxStackSize below.
++	}
++
++	@Override
++	public int getMaxDamage(ItemStack stack) {
++		EquipmentDefinition def = definition(stack);
++		return def != null ? def.uses() : 0;
++	}
++
++	@Override
++	public boolean isDamageable(ItemStack stack) {
++		return getMaxDamage(stack) > 0;
++	}
++
++	@Override
++	public int getMaxStackSize(ItemStack stack) {
++		EquipmentDefinition def = definition(stack);
++		if (def == null) {
++			return 1;
+ 		}
++		return def.uses() > 0 ? 1 : def.maxStack();
+ 	}
+ 
+ 	@Override

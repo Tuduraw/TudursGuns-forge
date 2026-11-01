@@ -1,0 +1,25 @@
+--- a/com/example/tudursguns/item/DefinedItem.java
++++ b/com/example/tudursguns/item/DefinedItem.java
+@@ -10,7 +10,6 @@
+ import net.minecraft.world.item.Item;
+ import net.minecraft.world.item.ItemStack;
+ import net.minecraft.world.item.TooltipFlag;
+-import net.minecraft.world.item.component.TooltipDisplay;
+ 
+ /** An item type whose stacks each name a definition through a component (see ModItems): the stack
+  * is named after its definition, and its tooltip describes it. */
+@@ -53,6 +52,14 @@
+ 		}
+ 	}
+ 
++	/** Forge 1.20.1 stand-in for the components' ignoreSwapAnimation: the held item is only re-equipped
++	 * (lowered and raised) when it becomes a different definition, not when its rounds, reload or mode change. */
++	@Override
++	public boolean shouldCauseReequipAnimation(ItemStack oldStack, ItemStack newStack, boolean slotChanged) {
++		return slotChanged || !ItemStack.isSameItem(oldStack, newStack)
++				|| !Objects.equals(this.component.get(oldStack), this.component.get(newStack));
++	}
++
+ 	/** The tooltip lines describing the definition. */
+ 	protected abstract void appendDetails(ItemStack stack, T def, Consumer<Component> tooltip);
+ }

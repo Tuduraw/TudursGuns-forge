@@ -1,0 +1,19 @@
+--- a/com/example/tudursguns/item/HandheldWeaponItem.java
++++ b/com/example/tudursguns/item/HandheldWeaponItem.java
+@@ -141,6 +141,16 @@
+ 		return MAX_USE_TICKS;
+ 	}
+ 
++	/** Forge 1.20.1: the melee bonus (definition plus attachments) as the main hand's attack damage. */
++	@Override
++	public com.google.common.collect.Multimap<net.minecraft.world.entity.ai.attributes.Attribute, net.minecraft.world.entity.ai.attributes.AttributeModifier> getAttributeModifiers(net.minecraft.world.entity.EquipmentSlot slot, ItemStack stack) {
++		HandheldDefinition def = ModDefinitions.HANDHELD.getAny(com.example.tudursguns.registry.ModComponents.WEAPON.get(stack));
++		if (slot != net.minecraft.world.entity.EquipmentSlot.MAINHAND || def == null) {
++			return super.getAttributeModifiers(slot, stack);
++		}
++		return HandheldCombat.meleeModifiers(stack, def);
++	}
++
+ 	@Override
+ 	public void inventoryTick(ItemStack stack, net.minecraft.world.level.Level tvmLevel, Entity entity, int tvmSlot, boolean tvmSelected) {
+ 		if (!(tvmLevel instanceof ServerLevel world)) {

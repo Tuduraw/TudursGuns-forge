@@ -1,0 +1,39 @@
+--- a/com/example/tudursguns/screen/SoldierPostScreenHandler.java
++++ b/com/example/tudursguns/screen/SoldierPostScreenHandler.java
+@@ -7,7 +7,6 @@
+ import com.example.tudursguns.registry.ModScreenHandlers;
+ import com.example.tudursvehiclemod.item.DroneRouteBookItem;
+ import com.example.tudursvehiclemod.compat.fabric.fabric.api.networking.v1.ServerPlayNetworking;
+-import net.minecraft.core.component.DataComponents;
+ import net.minecraft.server.level.ServerPlayer;
+ import net.minecraft.world.Container;
+ import net.minecraft.world.SimpleContainer;
+@@ -20,7 +19,6 @@
+ import net.minecraft.world.inventory.SimpleContainerData;
+ import net.minecraft.world.inventory.Slot;
+ import net.minecraft.world.item.ItemStack;
+-import net.minecraft.world.item.equipment.Equippable;
+ 
+ /** Soldier post: the weapon slot, four armor slots, the food slots, and (through the property
+  * delegate) what the soldier is up to, and a slot for a Drone Route Book (the route then comes
+@@ -81,7 +79,7 @@
+ 			this.addSlot(new Slot(inventory, SoldierPostBlockEntity.FOOD_SLOT_START + i, FOOD_X + (i % 3) * 18, TOP_Y + (i / 3) * 18) {
+ 				@Override
+ 				public boolean mayPlace(ItemStack stack) {
+-					return stack.has(DataComponents.FOOD);
++					return stack.isEdible();
+ 				}
+ 			});
+ 		}
+@@ -101,8 +99,9 @@
+ 	}
+ 
+ 	private static boolean fitsArmorSlot(ItemStack stack, EquipmentSlot slot) {
+-		Equippable equippable = stack.get(DataComponents.EQUIPPABLE);
+-		return equippable != null && equippable.slot() == slot;
++		return stack.getItem() instanceof net.minecraft.world.item.ArmorItem || stack.getItem() instanceof com.example.tudursguns.item.ArmorItem
++				? net.minecraft.world.entity.LivingEntity.getEquipmentSlotForItem(stack) == slot
++				: stack.getEquipmentSlot() == slot;
+ 	}
+ 
+ 	public int property(int index) {

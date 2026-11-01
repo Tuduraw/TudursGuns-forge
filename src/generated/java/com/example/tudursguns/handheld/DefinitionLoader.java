@@ -1,0 +1,100 @@
+package com.example.tudursguns.handheld;
+
+import com.example.tudursguns.TudursGuns;
+import com.example.tudursvehiclemod.asset.AddonPaths;
+import com.google.gson.JsonParser;
+import com.mojang.serialization.Codec;
+import com.mojang.serialization.JsonOps;
+import com.example.tudursvehiclemod.compat.fabric.fabric.api.resource.SimpleSynchronousResourceReloadListener;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.packs.resources.Resource;
+import net.minecraft.server.packs.resources.ResourceManager;
+import java.io.BufferedReader;
+import java.io.Reader;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.function.Consumer;
+
+/** Reads one kind of definition (see DefinitionSet) from data/<namespace>/<directory>/*.json on every
+ * data reload (including /reload), plus the same folder inside each pack under
+ * tudursvehiclemod-addons/ - where Tudur's Vehicle Mod reads vehicles and weapons from, so one addon
+ * pack can ship both. */
+public class DefinitionLoader<T> implements SimpleSynchronousResourceReloadListener {
+
+	private static final String SUFFIX = ".json";
+
+	private final String directory;
+	private final Codec<T> codec;
+	private final Consumer<Map<ResourceLocation, T>> sink;
+
+	DefinitionLoader(String directory, Codec<T> codec, Consumer<Map<ResourceLocation, T>> sink) {
+		this.directory = directory;
+		this.codec = codec;
+		this.sink = sink;
+	}
+
+	@Override
+	public ResourceLocation getFabricId() {
+		return new net.minecraft.resources.ResourceLocation(TudursGuns.MOD_ID, this.directory + "_definitions");
+	}
+
+	@Override
+	public void onResourceManagerReload(ResourceManager manager) {
+		Map<ResourceLocation, T> loaded = new LinkedHashMap<>();
+
+		for (Map.Entry<ResourceLocation, Resource> entry :
+				manager.listResources(this.directory, id -> id.getPath().endsWith(SUFFIX)).entrySet()) {
+			ResourceLocation fileId = entry.getKey();
+			String path = fileId.getPath();
+			ResourceLocation id = new net.minecraft.resources.ResourceLocation(fileId.getNamespace(),
+					path.substring(this.directory.length() + 1, path.length() - SUFFIX.length()));
+			try (Reader reader = entry.getValue().openAsReader()) {
+				parseInto(loaded, id, reader, fileId.toString());
+			} catch (Exception e) {
+				TudursGuns.LOGGER.error("Failed to read {} definition {}", this.directory, fileId, e);
+			}
+		}
+
+		int fromDataPacks = loaded.size();
+		loadFromAddonsFolder(loaded);
+
+		this.sink.accept(loaded);
+		TudursGuns.LOGGER.info("Loaded {} {} definition(s) ({} from tudursvehiclemod-addons/)",
+				loaded.size(), this.directory, loaded.size() - fromDataPacks);
+	}
+
+	private void parseInto(Map<ResourceLocation, T> loaded, ResourceLocation id, Reader reader, String source) {
+		this.codec.parse(JsonOps.INSTANCE, JsonParser.parseReader(reader))
+				.resultOrPartial(error -> TudursGuns.LOGGER.error("Failed to parse {} definition '{}' ({}): {}", this.directory, id, source, error))
+				.ifPresent(def -> loaded.put(id, def));
+	}
+
+	/** tudursvehiclemod-addons/<pack>/data/<namespace>/<directory>/**.json - never throws. */
+	private void loadFromAddonsFolder(Map<ResourceLocation, T> loaded) {
+		for (Path addonDir : AddonPaths.listSubdirectories(AddonPaths.getAddonsRoot())) {
+			for (Path namespaceDir : AddonPaths.listSubdirectories(addonDir.resolve("data"))) {
+				String namespace = namespaceDir.getFileName().toString();
+				Path kindDir = namespaceDir.resolve(this.directory);
+				if (!Files.isDirectory(kindDir)) {
+					continue;
+				}
+				try (var files = Files.walk(kindDir)) {
+					for (Path jsonFile : (Iterable<Path>) files.filter(p -> p.toString().endsWith(SUFFIX))::iterator) {
+						String relative = kindDir.relativize(jsonFile).toString().replace('\\', '/');
+						ResourceLocation id = new net.minecraft.resources.ResourceLocation(namespace, relative.substring(0, relative.length() - SUFFIX.length()));
+						try (BufferedReader reader = Files.newBufferedReader(jsonFile, StandardCharsets.UTF_8)) {
+							parseInto(loaded, id, reader, jsonFile.toString());
+						} catch (Exception e) {
+							TudursGuns.LOGGER.error("Failed to read {} definition {}", this.directory, jsonFile, e);
+						}
+					}
+				} catch (Exception e) {
+					TudursGuns.LOGGER.error("Failed to scan {}", kindDir, e);
+				}
+			}
+		}
+	}
+}

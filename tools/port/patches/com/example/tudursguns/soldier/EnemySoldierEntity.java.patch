@@ -1,0 +1,13 @@
+--- a/com/example/tudursguns/soldier/EnemySoldierEntity.java
++++ b/com/example/tudursguns/soldier/EnemySoldierEntity.java
+@@ -118,4 +118,10 @@
+ 	public double engageRange() {
+ 		return TudursGunsConfig.get().enemy_soldier_engage_range;
+ 	}
++
++	/** 1.20.1's EntityType.Builder has no eyeHeight: the player's eye height. */
++	@Override
++	protected float getStandingEyeHeight(net.minecraft.world.entity.Pose pose, net.minecraft.world.entity.EntityDimensions dimensions) {
++		return 1.62f;
++	}
+ }

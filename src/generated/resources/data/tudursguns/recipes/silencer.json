@@ -1,0 +1,22 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "pattern": [
+    "IWI"
+  ],
+  "key": {
+    "I": {
+      "item": "minecraft:iron_ingot"
+    },
+    "W": {
+      "tag": "minecraft:wool"
+    }
+  },
+  "result": {
+    "count": 1,
+    "item": "tudursguns:attachment",
+    "nbt": {
+      "tudursguns:attachment": "tudursguns:silencer"
+    }
+  }
+}

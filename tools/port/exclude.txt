@@ -1,0 +1,11 @@
+# 1.21-only client classes: Forge 1.20.1 versions live in src/forge/java under the same names
+# (1.20.1 has no entity render states, special item models or the 1.21.9 submit pipeline).
+com/example/tudursguns/client/mixin/SpecialItemModelAnimatedMixin.java
+com/example/tudursguns/client/mixin/BipedEntityModelAimMixin.java
+com/example/tudursguns/client/mixin/LivingEntityRendererAimMixin.java
+com/example/tudursguns/client/mixin/HeldItemRendererInvoker.java
+com/example/tudursguns/client/mixin/FirstPersonBaseMixin.java
+com/example/tudursguns/client/mixin/GameRendererFovMixin.java
+com/example/tudursguns/client/render/AimRenderState.java
+com/example/tudursguns/client/render/ObjArmorFeatureRenderer.java
+com/example/tudursguns/client/render/SoldierRenderer.java

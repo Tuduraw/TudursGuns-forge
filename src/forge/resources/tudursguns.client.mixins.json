@@ -1,0 +1,24 @@
+{
+  "required": true,
+  "minVersion": "0.8",
+  "package": "com.example.tudursguns.client.mixin",
+  "compatibilityLevel": "JAVA_17",
+  "client": [
+    "AddonTextureLoaderMixin",
+    "BipedEntityModelAimMixin",
+    "ClientPlayerEntitySprintMixin",
+    "CustomHeadLayerMixin",
+    "EntityLookSensitivityMixin",
+    "FirstPersonBaseMixin",
+    "GameRendererAccessor",
+    "GameRendererFovMixin",
+    "HeldItemRendererInvoker",
+    "ItemRendererSpecialMixin",
+    "LivingEntityRendererAimMixin",
+    "MouseScrollMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  },
+  "refmap": "tudursguns.refmap.json"
+}

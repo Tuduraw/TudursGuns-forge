@@ -1,0 +1,55 @@
+--- a/com/example/tudursguns/weapon/HandheldCombat.java
++++ b/com/example/tudursguns/weapon/HandheldCombat.java
+@@ -15,7 +15,6 @@
+ import com.example.tudursvehiclemod.network.WeaponFireSoundPayload;
+ import com.example.tudursvehiclemod.compat.fabric.fabric.api.networking.v1.PlayerLookup;
+ import com.example.tudursvehiclemod.compat.fabric.fabric.api.networking.v1.ServerPlayNetworking;
+-import net.minecraft.core.component.DataComponents;
+ import net.minecraft.core.registries.BuiltInRegistries;
+ import net.minecraft.network.chat.Component;
+ import net.minecraft.resources.ResourceLocation;
+@@ -23,14 +22,12 @@
+ import net.minecraft.server.level.ServerPlayer;
+ import net.minecraft.world.InteractionHand;
+ import net.minecraft.world.entity.Entity;
+-import net.minecraft.world.entity.EquipmentSlotGroup;
+ import net.minecraft.world.entity.LivingEntity;
+ import net.minecraft.world.entity.ai.attributes.AttributeModifier;
+ import net.minecraft.world.entity.ai.attributes.Attributes;
+ import net.minecraft.world.entity.player.Player;
+ import net.minecraft.world.item.Item;
+ import net.minecraft.world.item.ItemStack;
+-import net.minecraft.world.item.component.ItemAttributeModifiers;
+ import net.minecraft.world.phys.Vec3;
+ import java.util.EnumSet;
+ import java.util.Map;
+@@ -347,19 +344,17 @@
+ 	 * bonuses (a bayonet), or removes it when that's 0. Unchanged stacks aren't touched, so it's cheap
+ 	 * enough to call every inventory tick - which is how a weapon made by a recipe or command gets it. */
+ 	public static void syncMeleeDamage(ItemStack stack, HandheldDefinition def) {
++		// Forge 1.20.1: HandheldWeaponItem.getAttributeModifiers adds it (meleeModifiers).
++	}
++
++	/** The definition's melee_damage plus the attachments' bonuses (a bayonet), as attack damage. */
++	public static com.google.common.collect.Multimap<net.minecraft.world.entity.ai.attributes.Attribute, AttributeModifier> meleeModifiers(ItemStack stack, HandheldDefinition def) {
+ 		float damage = def.handling().meleeDamage() + WeaponModifiers.of(stack, def).meleeDamageBonus();
+-		if (damage > 0f) {
+-			ItemAttributeModifiers wanted = ItemAttributeModifiers.builder()
+-					.add(Attributes.ATTACK_DAMAGE,
+-							com.example.tudursguns.compat.Attrs.modifier(MELEE_BONUS_MODIFIER_ID, damage, AttributeModifier.Operation.ADDITION),
+-							EquipmentSlotGroup.MAINHAND)
+-					.build();
+-			if (!wanted.equals(stack.get(DataComponents.ATTRIBUTE_MODIFIERS))) {
+-				stack.set(DataComponents.ATTRIBUTE_MODIFIERS, wanted);
+-			}
+-		} else if (stack.has(DataComponents.ATTRIBUTE_MODIFIERS)) {
+-			stack.remove(DataComponents.ATTRIBUTE_MODIFIERS);
+-		}
++		if (damage <= 0f) {
++			return com.google.common.collect.ImmutableMultimap.of();
++		}
++		return com.google.common.collect.ImmutableMultimap.of(Attributes.ATTACK_DAMAGE,
++				com.example.tudursguns.compat.Attrs.modifier(MELEE_BONUS_MODIFIER_ID, damage, AttributeModifier.Operation.ADDITION));
+ 	}
+ 
+ 	// ---------------------------------------------------------------- burst fire
