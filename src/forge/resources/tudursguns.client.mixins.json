@@ -12,6 +12,7 @@
     "FirstPersonBaseMixin",
     "GameRendererAccessor",
     "GameRendererFovMixin",
+    "GuiGraphicsItemClipMixin",
     "HeldItemRendererInvoker",
     "ItemRendererSpecialMixin",
     "LivingEntityRendererAimMixin",

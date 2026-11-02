@@ -21,17 +21,58 @@ libs/            前提MOD (Forge 版) の jar を置く (git 管理外)
 ## 生成とビルド
 
 ```sh
-# 1. Fabric 版から src/generated を作り直す (Fabric 版を更新したときだけ)
-LOOM_JAVA_HOME=/path/to/jdk21 python3 tools/port/port.py generate --mojmap ../TudursGuns
+# Fabric 版の変更を取り込む (下記「更新の流れ」)
+LOOM_JAVA_HOME=/path/to/jdk21 FORGE_JAVA_HOME=/path/to/jdk17 \
+  python3 tools/port/port.py update --mojmap ../TudursGuns --ref <Fabric 版のコミット> --build
 
-# 2. Forge 版をビルド
+# Forge 版をビルド
 JAVA_HOME=/path/to/jdk17 ./gradlew build     # -> build/libs/tudursguns-0.1.0-forge-1.20.1.jar
 ```
 
-`port.py refresh` は Loom を動かさずに、前回の変換結果へ rules と patches だけを掛け直します。
+| コマンド | 内容 |
+|---|---|
+| `update` | `generate` を実行し、生成元の Fabric 版のコミットを `tools/port/SOURCE.json` に記録。前回からの Fabric 版の変更と、変わった生成ファイルの数を表示。`--build` でそのままコンパイル |
+| `generate --mojmap <dir>` | Fabric 版 (その時点の作業ツリー) から `src/generated` を作り直す。記録はしない |
+| `refresh` | Loom を動かさずに、前回の変換結果へ rules と patches だけを掛け直す (rules.json を変えたとき) |
+| `makepatches` | `src/generated/java` の手修正をパッチとして保存 |
+
 `sample_addon/`・`docs/` は生成の対象外です。
 
-### 生成の流れ (前提MODと同じ)
+## 更新の流れ (Fabric 版を変えたとき)
+
+Fabric 版 (TudursGuns) が正です。機能の追加・修正は Fabric 版で行い、Forge 版はそこから作り直します。
+Forge 版だけの修正 (1.20.1 との違いの吸収) は `rules.json`・パッチ・`src/forge` に置きます。
+
+1. **Fabric 版をコミットする** (push 済みのブランチ・タグでも可)。
+   コミット前の作業ツリーからも生成できますが、`SOURCE.json` に `"dirty": true` と記録され、同じ結果を作り直せません
+2. **取り込む**:
+   ```sh
+   LOOM_JAVA_HOME=/path/to/jdk21 FORGE_JAVA_HOME=/path/to/jdk17 \
+     python3 tools/port/port.py update --mojmap ../TudursGuns --ref <コミット> --build
+   ```
+   `--ref` を付けると、そのコミットを `.port/source` に書き出して使うため、Fabric 版の作業ツリーには触れません
+3. **失敗したときの直し方**:
+   | 症状 | 直す場所 |
+   |---|---|
+   | `PATCH FAILED` (`.rej` が残る) | `src/generated/java` の該当ファイルを `.rej` を見ながら直し、`.rej`/`.orig` を消して `makepatches` |
+   | コンパイルエラー (1.20.1 に無い API の新規使用) | 何度も出る形なら `rules.json` に規則を足して `refresh`。1 か所なら `src/generated/java` を直して `makepatches`。1.20.1 に無い仕組みなら `src/forge/java` に代替を書く |
+   | Mixin の対象が 1.20.1 に無い | `exclude.txt` に足し、1.20.1 版を `src/forge/java` に同名で書く (mixin 設定は `src/forge/resources/*.mixins.json`) |
+   | 新しい mixin を Fabric 版に足した | `src/forge/resources/tudursguns(.client).mixins.json` にも足す (Fabric 版の mixin 設定はコピーされない) |
+4. **確認する**: `./gradlew runServer` / `runClient` (下記「動作確認」)
+5. **コミットする**: 生成ファイル・`SOURCE.json`・パッチ・規則をまとめて 1 コミットに。
+   メッセージは `Sync with TudursGuns <短いハッシュ>: <内容>` とすると、どの版に対応するか追えます
+
+前提MOD (Forge 版) が更新されたときは、`libs/` の jar を差し替え、`gradle.properties` の `tudursvehiclemod_version` を合わせてビルドし直します。
+前提MOD の互換レイヤー (`com.example.tudursvehiclemod.compat`) が変わった場合は、`rules.json` の後半 (前提MODの規則の写し) も合わせます。
+
+### 動作確認
+
+```sh
+JAVA_HOME=/path/to/jdk17 ./gradlew runServer                 # run/ に専用サーバー
+JAVA_HOME=/path/to/jdk17 ./gradlew runClient -PquickPlay=<ワールド名>   # run/saves/<ワールド名> をすぐ開く
+```
+
+## 生成の仕組み (前提MODと同じ)
 
 1. **名前の変換**: 1.21.11 の intermediary 名をキーに 1.20.1 の Mojang 名へ写すマッピングを作り (`build_cross.py`)、
    Loom の `migrateClientMappings` で全ソースを書き換え
@@ -76,6 +117,8 @@ python3 tools/port/port.py makepatches
 | 空の装備アセット (`tudursguns:none`) で頭のアイテム表示を消す | `CustomHeadLayerMixin` でこのMODの防具を頭に描かない |
 | HUD の `attachElementBefore` / `replaceElement` | `compat/client/HudElementRegistry` (GUI オーバーレイと `RenderGuiOverlayEvent.Pre`) |
 | 地雷探知機の枠 (Gizmos.cuboid、壁越し) | `compat/client/Outlines` |
+| アイテムモデルの差し替え (防具定義の `item_model` → `minecraft:item_model` コンポーネント) | `SpecialItemModels.resolve` が防具定義の `item_model` を見て、そのアイテム定義のモデルを使う (インベントリでは 2D のアイコン) |
+| GUI のアイテムは 16x16 のマスに描かれ、はみ出した部分は切れる (1.21.6 以降) | `GuiGraphicsItemClipMixin` で special モデルのアイテムをマスの範囲で切り取る |
 | マウスイベント (`MouseButtonEvent`)、キーのカテゴリ | rules.json で 1.20.1 の形へ |
 
 1.20.1 版で作り直したクラス (`exclude.txt`、同名で `src/forge/java` にある):
@@ -100,3 +143,12 @@ python3 tools/port/port.py makepatches
   - 画面: 銃の作業台・兵士詰所 (ブロックの右クリック)
   - インベントリのアイコン (銃・投擲物・防具・ブロック)
 - 未確認: 射撃・投擲・地雷・兵士詰所の出撃と経路、スコープの画面、アドオンパック (sample_addon) の読み込み
+
+## 修正 (2026-11-02)
+
+- アイテムのアイコンがマスからはみ出す・ずれる: 防具定義の `item_model` (インベントリ用の 2D アイコン) が使われず、OBJ モデルが
+  大きく描かれていた。`SpecialItemModels` で対応し、ほかの OBJ アイテムも GUI ではマスの範囲で切り取る (1.21.6 以降と同じ)
+- 兵士詰所などの画面にスロットの枠が無い: Fabric 版の不具合 (詰所はスロットを平らな灰色で塗っていた)。Fabric 版で
+  共通の `SlotBackground` (へこんだ枠) に揃え (`705a4ca`)、`update` で取り込んだ
+- 更新の流れ: `port.py update` と `SOURCE.json` を追加
+- 確認: 全アイテム 36 種を持ったインベントリ、兵士詰所・銃の作業台・武器作業台の画面 (開発環境クライアント)

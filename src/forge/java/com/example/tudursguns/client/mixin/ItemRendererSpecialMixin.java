@@ -18,18 +18,18 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
-/** Forge 1.20.1 only: draws stacks whose item definition is a special model (SpecialItemModels) the
- * way 1.21.4 does - the base model's display transform, then the special renderer, every frame.
- * getModel hands out the base model so callers use its GUI lighting and transforms. */
+/** Forge 1.20.1 only: item definitions (SpecialItemModels). getModel hands out the model 1.21.4 would
+ * use (a special model's base, or an item model override's); a stack with a special model is drawn
+ * the way 1.21.4 does - the base model's display transform, then the special renderer, every frame. */
 @Mixin(ItemRenderer.class)
 public abstract class ItemRendererSpecialMixin {
 
 	@Inject(method = "getModel(Lnet/minecraft/world/item/ItemStack;Lnet/minecraft/world/level/Level;Lnet/minecraft/world/entity/LivingEntity;I)Lnet/minecraft/client/resources/model/BakedModel;",
 			at = @At("HEAD"), cancellable = true)
 	private void tudursguns$baseModel(ItemStack stack, Level level, LivingEntity entity, int seed, CallbackInfoReturnable<BakedModel> cir) {
-		SpecialItemModels.Entry entry = SpecialItemModels.get(stack);
-		if (entry != null) {
-			cir.setReturnValue(Minecraft.getInstance().getModelManager().getModel(entry.base()));
+		SpecialItemModels.Resolved resolved = SpecialItemModels.resolve(stack);
+		if (resolved != null) {
+			cir.setReturnValue(resolved.bakedModel());
 		}
 	}
 
@@ -37,16 +37,15 @@ public abstract class ItemRendererSpecialMixin {
 			at = @At("HEAD"), cancellable = true)
 	private void tudursguns$renderSpecial(ItemStack stack, ItemDisplayContext displayContext, boolean leftHand, PoseStack matrices,
 			MultiBufferSource buffers, int light, int overlay, BakedModel model, CallbackInfo ci) {
-		SpecialItemModels.Entry entry = SpecialItemModels.get(stack);
-		if (entry == null) {
-			return;
+		SpecialItemModels.Resolved resolved = SpecialItemModels.resolve(stack);
+		if (resolved == null || resolved.special() == null) {
+			return; // vanilla draws the model getModel handed out
 		}
 		ci.cancel();
 		matrices.pushPose();
-		BakedModel base = Minecraft.getInstance().getModelManager().getModel(entry.base());
-		base.applyTransform(displayContext, matrices, leftHand);
+		resolved.bakedModel().applyTransform(displayContext, matrices, leftHand);
 		matrices.translate(-0.5f, -0.5f, -0.5f);
-		tudursguns$submit(entry.renderer(), stack, displayContext, matrices, buffers, light, overlay);
+		tudursguns$submit(resolved.special().renderer(), stack, displayContext, matrices, buffers, light, overlay);
 		matrices.popPose();
 	}
 

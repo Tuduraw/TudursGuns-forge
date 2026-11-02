@@ -19,6 +19,16 @@ generate:
 
 refresh: re-applies rules.json and the patches to the last migration output (after changing rules).
 
+update: brings in the Fabric project's current state - generate, then records which commit the sources
+came from in tools/port/SOURCE.json and lists what changed since the last update. See PORTING.md.
+
+    python tools/port/port.py update [--mojmap ../TudursGuns] [--ref <commit/branch/tag>] [--build]
+
+  --ref    generate from that commit of the Fabric repository (exported to .port/source) instead of
+           its working tree, so the Fabric checkout isn't touched and the result is reproducible
+  --build  then compile with JDK 17 (FORGE_JAVA_HOME, else JAVA_HOME); on errors, runs autofix.py
+           once (Java 17 instanceof fixes) and compiles again
+
 makepatches: writes one patch per file that differs from .port/pristine (and removes patches
 of files that no longer differ). Edit src/generated/java freely, then run this before committing.
 """
@@ -293,11 +303,94 @@ def makepatches():
     log(f"{len(seen)} patch file(s)")
 
 
+SOURCE_FILE = HERE / "SOURCE.json"
+
+
+def _git(repo, *args, check=True):
+    r = subprocess.run(["git", "-C", str(repo), *args], capture_output=True, text=True)
+    if check and r.returncode != 0:
+        sys.exit(f"git {' '.join(args)} failed in {repo}: {r.stderr.strip()}")
+    return r.stdout.strip()
+
+
+def _compile():
+    java = os.environ.get("FORGE_JAVA_HOME") or os.environ.get("JAVA_HOME")
+    env = dict(os.environ, **({"JAVA_HOME": java} if java else {}))
+    out = WORK / "compile.log"
+    gradlew = PROJECT / ("gradlew.bat" if os.name == "nt" else "gradlew")
+    for attempt in (1, 2):
+        with open(out, "w", encoding="utf-8") as f:
+            ok = subprocess.run([str(gradlew), "--no-daemon", "compileJava"], cwd=PROJECT, env=env,
+                                stdout=f, stderr=subprocess.STDOUT).returncode == 0
+        if ok:
+            log("compileJava: OK")
+            return True
+        errors = out.read_text(encoding="utf-8", errors="replace").count(" error: ")
+        log(f"compileJava: {errors} error(s) (log: {out})")
+        if attempt == 1:
+            log("running autofix.py and compiling again")
+            subprocess.run([sys.executable, str(HERE / "autofix.py"), str(out)], cwd=PROJECT)
+    return False
+
+
+def update(mojmap, ref=None, build=False):
+    """generate from the Fabric project (its working tree, or one commit of it) and record the source."""
+    repo = Path(mojmap).resolve()
+    if not (repo / "build.gradle").exists():
+        sys.exit(f"{repo} is not the Fabric project (no build.gradle) - pass --mojmap")
+    libs = sorted((PROJECT / "libs").glob("tudursvehiclemod-*.jar"))
+    if not libs:
+        log("WARNING: no Tudur's Vehicle Mod (Forge) jar in libs/ - the build will fail until one is copied there")
+    previous = json.loads(SOURCE_FILE.read_text(encoding="utf-8")) if SOURCE_FILE.exists() else {}
+    if ref:
+        commit = _git(repo, "rev-parse", f"{ref}^{{commit}}")
+        dirty = False
+        source = WORK / "source"
+        if source.exists():
+            shutil.rmtree(source)
+        source.mkdir(parents=True)
+        archive = subprocess.run(["git", "-C", str(repo), "archive", "--format=tar", commit], capture_output=True, check=True).stdout
+        subprocess.run(["tar", "-x", "-C", str(source)], input=archive, check=True)
+        log(f"exported {commit[:7]} of {repo} to {source}")
+    else:
+        commit = _git(repo, "rev-parse", "HEAD")
+        dirty = bool(_git(repo, "status", "--porcelain", "--", "src", "build.gradle", "gradle.properties"))
+        source = repo
+        if dirty:
+            log("WARNING: the Fabric working tree has uncommitted changes - SOURCE.json will say so")
+    ok = generate(source)
+    record = {"repository": _git(repo, "remote", "get-url", "origin", check=False) or str(repo),
+              "commit": commit, "dirty": dirty,
+              "subject": _git(repo, "log", "-1", "--format=%s", commit)}
+    SOURCE_FILE.write_text(json.dumps(record, indent=2) + "\n", encoding="utf-8")
+    old = previous.get("commit")
+    if old and old != commit:
+        log(f"Fabric changes since the last update ({old[:7]}..{commit[:7]}):")
+        print(_git(repo, "log", "--oneline", f"{old}..{commit}", check=False) or "  (not an ancestor - compare by hand)")
+    elif old == commit:
+        log(f"same Fabric commit as the last update ({commit[:7]})")
+    changed = _git(PROJECT, "status", "--porcelain", "--", "src/generated", check=False).splitlines()
+    log(f"{len(changed)} generated file(s) changed (git status src/generated)")
+    if not ok:
+        log("fix the failed patches: edit the files under src/generated/java (the .rej files show the hunks), "
+            "delete the .rej/.orig files, then run makepatches")
+        return False
+    if build and not _compile():
+        log("fix the remaining errors in src/generated/java (then makepatches), tools/port/rules.json (then refresh) "
+            "or src/forge/java")
+        return False
+    return True
+
+
 if __name__ == "__main__":
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("command", choices=["generate", "refresh", "makepatches"])
+    ap.add_argument("command", choices=["generate", "refresh", "makepatches", "update"])
     ap.add_argument("--mojmap")
+    ap.add_argument("--ref")
+    ap.add_argument("--build", action="store_true")
     a = ap.parse_args()
+    if a.command == "update":
+        sys.exit(0 if update(a.mojmap or PROJECT.parent / "TudursGuns", a.ref, a.build) else 1)
     if a.command == "generate":
         if not a.mojmap:
             sys.exit("--mojmap is required")
