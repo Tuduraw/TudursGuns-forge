@@ -98,7 +98,7 @@ public final class HandheldHud {
 		int reloadTicks = modifiers.reloadTicks(weapon.reloadTicks());
 		variables.put("ammo", (double) com.example.tudursguns.registry.ModComponents.AMMO.getOrDefault(stack, 0));
 		variables.put("max_ammo", (double) magazineSize);
-		int reserve = HandheldCombat.availableRounds(player, def);
+		int reserve = HandheldCombat.availableRounds(player, stack, def);
 		variables.put("reserve_ammo", reserve == Integer.MAX_VALUE ? -1.0 : reserve);
 
 		Long reloadUntil = com.example.tudursguns.registry.ModComponents.RELOAD_UNTIL.get(stack);
