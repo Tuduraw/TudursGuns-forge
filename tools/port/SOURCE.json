@@ -1,6 +1,6 @@
 {
   "repository": "https://github.com/Tuduraw/TudursGuns",
-  "commit": "4d288ba8794443e832e271ea3d918caa8beddd93",
+  "commit": "6ea6a23ef57bd02515577eaa88f5ceb1d4a4dbf0",
   "dirty": false,
-  "subject": "Ammo items for every weapon, universal ammo, and non-reloadable weapons"
+  "subject": "Fix the first aid kit crafting recipe failing to load"
 }
